@@ -2,25 +2,35 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const businessRoutes = require('./routes/businessRoutes');
-const connectDB = require('./config/db');
+const {businessRoutes} = require('./routes/businessRoutes');
+const {investorRoutes} = require('./routes/investorRoutes');
+const cors = require ("cors")
 
 // Load environment variables
 dotenv.config();
-
-// Connect to MongoDB
-connectDB();
-
+// Initialize Express app
 const app = express();
-
-// Middleware
 app.use(express.json());
 
 // Routes
 app.use('/api/business', businessRoutes);
+app.use('/api/investor', investorRoutes);
 
-// Server listener
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+// Server listener and DB connection
+async function main() {
+        try {
+          await mongoose.connect(process.env.MONGO_URI);
+          console.log("Connected to MongoDB");
+      
+          app.listen(3000, () => {
+            console.log("Server is running on port 3000");
+          });
+      
+        } catch (error) {
+          console.error("Error connecting to MongoDB:", error);
+        }
+      }
+    
+      main();
+
