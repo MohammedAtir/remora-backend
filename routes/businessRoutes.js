@@ -1,8 +1,17 @@
 // routes/businessRoutes.js
 const express = require('express');
-const router = express.Router();
-const { registerBusiness } = require('../controllers/businessController');
+let {Router} = require ("express");
+const BusinessModel = require('../config/db');
 
-router.post('/register', registerBusiness);
+
+
+
+
+
+
+
+
+
+
 
 module.exports = router;
