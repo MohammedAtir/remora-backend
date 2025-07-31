@@ -1,17 +1,9 @@
-// routes/businessRoutes.js
 const express = require('express');
-let {Router} = require ("express");
-const BusinessModel = require('../config/db');
+const router = express.Router();
 
-
-
-
-
-
-
-
-
-
-
+// Example route (temporary, for testing)
+router.get('/', (req, res) => {
+  res.send('Business route working!');
+});
 
 module.exports = router;
