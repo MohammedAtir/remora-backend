@@ -1,0 +1,137 @@
+app workflow 
+
+flowchart TD
+
+A1[Business Signup] --> A2[Basic Info Form]
+A2 --> A3[Admin Receives Business Application]
+A3 --> A4[Offline Due Diligence]
+A4 --> A5[Admin Uploads Verified Data + Audit Reports]
+A5 --> A6[Set Equity Price + Valuation]
+A6 --> A7[Business Listed Publicly (Limited Data for Free Users)]
+A7 --> A8[Full Data Available for Subscribers]
+A8 --> A9[Investor Makes Offer]
+A9 --> A10[Business Accepts/Negotiates]
+A10 --> A11[Remora Intervenes for Final Deal Closure]
+A11 --> A12[Funds Transferred + Equity Finalized]
+A12 --> A13[Business Onboards to Remora ERP]
+A13 --> A14[ERP Data Feeds Investor Dashboard]
+
+
+flowchart TD
+
+B1[Investor Signup] --> B2[Basic Info Form + KYC]
+B2 --> B3[Free Plan: See Limited Listings]
+B3 --> B4[Upgrade to Subscription for Full Data]
+B4 --> B5[View Detailed Financials + Equity Price]
+B5 --> B6[Use AI Forecast & Analysis Tool]
+B6 --> B7[Make Offer from Business Page]
+B7 --> B8[Wait for Business Reply]
+B8 --> B9[Negotiation via Platform]
+B9 --> B10[Remora Finalizes Deal]
+B10 --> B11[Equity Purchase Completed]
+B11 --> B12[Business Appears in Investor Dashboard]
+B12 --> B13[Investor Tracks Business Performance via ERP Data]
+
+
+Feature List (Backend + Frontend)
+Business Side
+Signup/Login (role: business)
+
+Profile Setup Wizard:
+
+Basic company details
+
+Industry & location
+
+Funding goal & equity offered
+
+Due Diligence Management (admin-only):
+
+Upload audit reports
+
+Upload verified documents
+
+Set valuation & equity price
+
+Listing Management:
+
+Toggle listing status (pending, verified, listed, closed)
+
+Attach pitch deck / media
+
+Offer Management:
+
+See offers from investors
+
+Accept / reject / counter-offer
+
+ERP Integration:
+
+Sync operational & financial KPIs
+
+Provide periodic updates
+
+Investor Side
+Signup/Login (role: investor)
+
+Profile Setup:
+
+Investment range & preferences
+
+KYC verification
+
+Business Discovery:
+
+Browse businesses (filter by industry, size, equity price, ROI potential)
+
+Limited vs. full data based on subscription
+
+Business Detail Page:
+
+Company overview
+
+Verified financials
+
+Valuation breakdown
+
+Equity pricing
+
+AI-driven forecast tool
+
+Offer System:
+
+Make offer
+
+Track offer status
+
+Message business (optional)
+
+Deal Tracking:
+
+Closed investments in dashboard
+
+Live performance tracking via ERP
+
+Admin Side
+User Management (approve/reject business & investor accounts)
+
+Due Diligence Dashboard:
+
+Upload verification data
+
+Add valuation & equity pricing
+
+Listing Control:
+
+Publish/unpublish businesses
+
+Deal Management:
+
+Monitor offers & negotiations
+
+Facilitate contract signing
+
+ERP Data Feed Control:
+
+Ensure correct KPIs flow to investor dashboards
+
