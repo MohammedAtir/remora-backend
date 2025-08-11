@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const businessController = require('../controllers/businessController');
+const auth = require('../middlewares/authMiddleware');
+const requireRole = require('../middlewares/roleMiddleware');
 
-// Example route (temporary, for testing)
-router.get('/', (req, res) => {
-  res.send('Business route working!');
-});
+router.post('/', auth, requireRole('business_owner'), businessController.createBusiness);
+router.get('/', businessController.listBusinesses);
+router.get('/:id', businessController.getBusiness);
+router.put('/:id', auth, businessController.updateBusiness); // update requires auth & ownership check inside controller
 
 module.exports = router;
