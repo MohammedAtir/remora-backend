@@ -1,0 +1,43 @@
+// Use Mongo aggregation for performance in real app
+const Transaction = require('../models/Transaction');
+const Business = require('../models/Business');
+const Coin = require('../models/Coin');
+
+exports.getPortfolio = asyncHandler(async (req, res) => {
+  const investorId = req.params.id || req.user.id;
+  // Aggregate net coins per business
+  const pipeline = [
+    { $match: { $or: [{ to: investorId }, { from: investorId }] } },
+    {
+      $group: {
+        _id: "$businessId",
+        bought: { $sum: { $cond: [{ $eq: ["$to", mongoose.Types.ObjectId(investorId)] }, "$coins", 0] } },
+        sold: { $sum: { $cond: [{ $eq: ["$from", mongoose.Types.ObjectId(investorId)] }, "$coins", 0] } }
+      }
+    },
+    {
+      $project: {
+        businessId: "$_id",
+        net: { $subtract: ["$bought", "$sold"] }
+      }
+    }
+  ];
+
+  const holdings = await Transaction.aggregate(pipeline);
+  const result = [];
+
+  for (const h of holdings) {
+    if (h.net <= 0) continue;
+    const business = await Business.findById(h.businessId);
+    const latestCoin = await Coin.findOne({ businessId: h.businessId }).sort({ mintedAt: -1 });
+    const pricePerCoin = latestCoin ? latestCoin.unitValue : (business.valuation && business.coinSupply ? business.valuation / business.coinSupply : 0);
+    result.push({
+      business: { id: business._id, name: business.name, sector: business.sector },
+      netCoins: h.net,
+      pricePerCoin,
+      value: h.net * pricePerCoin
+    });
+  }
+
+  res.json({ portfolio: result });
+});
