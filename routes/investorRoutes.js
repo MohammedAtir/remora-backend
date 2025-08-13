@@ -5,6 +5,6 @@ const auth = require('../middlewares/authMiddleware');
 
 router.post('/', investorController.createInvestor);
 router.get('/', investorController.listInvestors);
-router.get('/:id/portfolio', auth, investorController.getPortfolio);
+router.get('/portfolio', auth, investorController.getPortfolio);
 
 module.exports = router;

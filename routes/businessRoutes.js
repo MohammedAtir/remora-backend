@@ -24,11 +24,18 @@ const validateBusiness = [
 
 // Routes
 router.post(
-  '/',
+  '/create',
   authMiddleware,
   requireRole('business_owner'),
   validateBusiness,
   asyncHandler(businessController.createBusiness)
+);
+
+router.post(
+  '/mint',
+  authMiddleware,
+  requireRole('business_owner'),
+  asyncHandler(businessController.mintAsset) // You'll need to create this controller function
 );
 
 router.get('/', asyncHandler(businessController.listBusinesses));

@@ -1,126 +1,136 @@
+// tests/api.test.js
+
 const request = require('supertest');
 const mongoose = require('mongoose');
-require('dotenv').config();
+const app = require('../app');
+const { startServer } = require('../server');
 
-let server; // Will hold the running app
-let authToken; // Store JWT for authenticated routes
-let createdBusinessId;
-let createdInvestorId;
-let createdTransactionId;
+let server;
+let investorAccessToken;
+let investorRefreshToken;
+let businessOwnerAccessToken;
+let businessOwnerRefreshToken;
+let businessId;
+
+const investorUser = {
+  name: 'Test Investor',
+  email: `investor_${Date.now()}@test.com`,
+  password: 'password123',
+  role: 'investor'
+};
+
+const businessOwnerUser = {
+  name: 'Test Business Owner',
+  email: `businessowner_${Date.now()}@test.com`,
+  password: 'password123',
+  role: 'business_owner'
+};
 
 beforeAll(async () => {
-  // Import the app AFTER setting env vars
-  server = require('../server');
-  // Ensure DB is connected before tests
-  await mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+  await mongoose.connect(process.env.MONGO_URI);
+  server = app.listen(4001, () => {
+    console.log('✅ Test server started on port 4001');
   });
 });
 
 afterAll(async () => {
   await mongoose.connection.close();
+  await server.close();
+  console.log('✅ Test server closed and MongoDB connection closed.');
 });
 
-describe('API Integration Tests', () => {
-  // ----------- AUTH ROUTES -----------
-  test('POST /api/auth/register should create a new user', async () => {
-    const res = await request(server)
-      .post('/api/auth/register')
-      .send({
-        name: 'Test User',
-        email: `testuser_${Date.now()}@mail.com`,
-        password: 'Password123!',
-      });
-
+// --- Auth Endpoints Test Suite ---
+describe('Auth Endpoints', () => {
+  test('Register investor user', async () => {
+    const res = await request(server).post('/api/auth/register').send(investorUser);
     expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty('token');
+    expect(res.body).toHaveProperty('accessToken');
+    expect(res.body).toHaveProperty('user');
+    investorAccessToken = res.body.accessToken;
+    investorRefreshToken = res.body.refreshToken;
   });
 
-  test('POST /api/auth/login should return a JWT', async () => {
-    const res = await request(server)
-      .post('/api/auth/login')
-      .send({
-        email: process.env.TEST_USER_EMAIL,
-        password: process.env.TEST_USER_PASSWORD,
-      });
-
+  test('Login investor user', async () => {
+    const res = await request(server).post('/api/auth/login').send(investorUser);
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('token');
-    authToken = res.body.token;
+    expect(res.body).toHaveProperty('accessToken');
+    expect(res.body.user).toHaveProperty('role', 'investor');
+    investorAccessToken = res.body.accessToken;
   });
 
-  // ----------- BUSINESS ROUTES -----------
-  test('POST /api/business should create a business', async () => {
+  test('Refresh token for investor user', async () => {
+    const res = await request(server).post('/api/auth/refresh');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('accessToken');
+  });
+});
+
+// --- Business Endpoints Test Suite ---
+describe('Business Endpoints', () => {
+  beforeAll(async () => {
+    // Register and login a business owner to pass role-based middleware
+    await request(server).post('/api/auth/register').send(businessOwnerUser);
+    const res = await request(server).post('/api/auth/login').send(businessOwnerUser);
+    businessOwnerAccessToken = res.body.accessToken;
+    businessOwnerRefreshToken = res.body.refreshToken;
+  });
+
+  test('Create a new business', async () => {
     const res = await request(server)
-      .post('/api/business')
-      .set('Authorization', `Bearer ${authToken}`)
+      .post('/api/business/create')
+      .set('Authorization', `Bearer ${businessOwnerAccessToken}`)
       .send({
         name: 'Test Business',
-        description: 'A sample test business',
-        sector: 'Tech',
+        sector: 'Finance',
+        constitution: 'Private Limited Company',
+        revenue: '1Crore to 5cr',
+        companySize: '11-50 Employees'
       });
-
     expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty('_id');
-    createdBusinessId = res.body._id;
+    expect(res.body).toHaveProperty('businessId');
+    businessId = res.body.businessId;
   });
+});
 
-  test('GET /api/business should list businesses', async () => {
+// --- Mint Endpoint Test Suite ---
+describe('Mint Endpoint', () => {
+  test('Mint a new asset', async () => {
     const res = await request(server)
-      .get('/api/business')
-      .set('Authorization', `Bearer ${authToken}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-  });
-
-  // ----------- INVESTOR ROUTES -----------
-  test('POST /api/investor should create an investor', async () => {
-    const res = await request(server)
-      .post('/api/investor')
-      .set('Authorization', `Bearer ${authToken}`)
+      .post('/api/business/mint')
+      .set('Authorization', `Bearer ${businessOwnerAccessToken}`)
       .send({
-        name: 'Test Investor',
-        type: 'Angel',
-        fundsAvailable: 100000,
+        businessId: businessId,
+        valuation: 1000
       });
-
     expect(res.statusCode).toBe(201);
-    createdInvestorId = res.body._id;
+    expect(res.body).toHaveProperty('assetId');
   });
+});
 
-  test('GET /api/investor should list investors', async () => {
+// --- Trade Endpoint Test Suite ---
+describe('Trade Endpoint', () => {
+  test('Execute trade (buy)', async () => {
     const res = await request(server)
-      .get('/api/investor')
-      .set('Authorization', `Bearer ${authToken}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-  });
-
-  // ----------- TRANSACTION ROUTES -----------
-  test('POST /api/transaction should create a transaction', async () => {
-    const res = await request(server)
-      .post('/api/transaction')
-      .set('Authorization', `Bearer ${authToken}`)
+      .post('/api/transaction/trade')
+      .set('Authorization', `Bearer ${investorAccessToken}`)
       .send({
-        businessId: createdBusinessId,
-        investorId: createdInvestorId,
-        amount: 50000,
-        date: new Date(),
+        businessId: businessId,
+        type: 'buy',
+        quantity: 10
       });
-
     expect(res.statusCode).toBe(201);
-    createdTransactionId = res.body._id;
+    expect(res.body).toHaveProperty('transactionId');
   });
+});
 
-  test('GET /api/transaction should list transactions', async () => {
+// --- Portfolio Endpoint Test Suite ---
+describe('Portfolio Endpoint', () => {
+  test('Get portfolio', async () => {
     const res = await request(server)
-      .get('/api/transaction')
-      .set('Authorization', `Bearer ${authToken}`);
-
+      .get('/api/investor/portfolio')
+      .set('Authorization', `Bearer ${investorAccessToken}`);
     expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body).toHaveProperty('assets');
+    expect(Array.isArray(res.body.assets)).toBe(true);
   });
 });
