@@ -1,6 +1,12 @@
 // app.js
 const express = require('express');
 const cors = require('cors');
+
+app.use(cors({
+  origin: ['http://localhost:8080', 'http://127.0.0.1:8080'],
+  credentials: true, // keep true even if you don't use cookies (nice for later)
+}));
+
 const dotenv = require('dotenv');
 
 dotenv.config();
